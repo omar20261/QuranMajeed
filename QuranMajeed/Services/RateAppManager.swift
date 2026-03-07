@@ -5,6 +5,8 @@
 
 import Foundation
 import StoreKit
+import SwiftUI
+import Combine
 
 class RateAppManager: ObservableObject {
     private let userDefaults = UserDefaults.standard
