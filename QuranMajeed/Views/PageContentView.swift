@@ -1,0 +1,222 @@
+//
+//  PageContentView.swift
+//  QuranMajeed
+//
+
+import SwiftUI
+
+struct PageContentView: View {
+    let page: QuranPage
+
+    var body: some View {
+        ZStack {
+            // Background
+            QuranTheme.pageBackground
+                .ignoresSafeArea()
+
+            // Page frame
+            PageFrameView {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .center, spacing: 0) {
+                        ForEach(groupedContent, id: \.id) { section in
+                            // Juz marker if new juz starts
+                            if let juzNumber = section.newJuzNumber {
+                                JuzMarkerView(juzNumber: juzNumber)
+                            }
+
+                            if section.showSurahBanner {
+                                SurahBannerView(surah: section.surah)
+                            }
+
+                            if section.showBismillah {
+                                BismillahView()
+                            }
+
+                            flowingTextView(for: section.ayahs)
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
+                        }
+                    }
+                    .padding(.vertical, 16)
+                }
+            }
+            .padding(12)
+        }
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var groupedContent: [PageSection] {
+        var sections: [PageSection] = []
+        var currentSurahId: Int?
+        var currentJuz: Int?
+
+        for pageAyah in page.ayahs {
+            let isNewJuz = currentJuz != pageAyah.ayah.juz
+            let juzToShow = isNewJuz ? pageAyah.ayah.juz : nil
+
+            if pageAyah.surah.id != currentSurahId {
+                sections.append(PageSection(
+                    surah: pageAyah.surah,
+                    showSurahBanner: pageAyah.isFirstAyahOfSurah,
+                    showBismillah: pageAyah.showBismillah,
+                    newJuzNumber: juzToShow,
+                    ayahs: [pageAyah]
+                ))
+                currentSurahId = pageAyah.surah.id
+            } else {
+                // Check if juz changed mid-section
+                if isNewJuz {
+                    sections.append(PageSection(
+                        surah: pageAyah.surah,
+                        showSurahBanner: false,
+                        showBismillah: false,
+                        newJuzNumber: juzToShow,
+                        ayahs: [pageAyah]
+                    ))
+                } else {
+                    sections[sections.count - 1].ayahs.append(pageAyah)
+                }
+            }
+            currentJuz = pageAyah.ayah.juz
+        }
+
+        return sections
+    }
+
+    private let bismillahPattern = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
+
+    @ViewBuilder
+    private func flowingTextView(for ayahs: [PageAyah]) -> some View {
+        // Filter out first ayah of Surah 1 (it's only Bismillah)
+        let displayAyahs = ayahs.filter { pageAyah in
+            !(pageAyah.surah.id == 1 && pageAyah.ayah.number == 1)
+        }
+
+        let combinedText = displayAyahs.reduce(Text("")) { result, pageAyah in
+            // Remove Bismillah from first ayah text (shown in decoration)
+            var text = pageAyah.ayah.arabicText
+            if pageAyah.ayah.number == 1 && pageAyah.surah.id != 9 {
+                text = text.replacingOccurrences(of: bismillahPattern, with: "").trimmingCharacters(in: .whitespaces)
+            }
+
+            let ayahText = Text(text)
+                .font(QuranTheme.arabicFont(size: 24))
+                .foregroundColor(QuranTheme.arabicText)
+
+            // Using ornate Quran parentheses with number inside ﴿١﴾
+            let marker = Text(" \u{FD3F}\(pageAyah.ayah.number.arabicNumeral)\u{FD3E} ")
+                .font(QuranTheme.arabicFont(size: 20))
+                .foregroundColor(QuranTheme.gold)
+
+            return result + ayahText + marker
+        }
+
+        combinedText
+            .lineSpacing(20)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+    }
+}
+
+struct PageFrameView<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .background(QuranTheme.pageBackground)
+            .overlay(
+                // Double border frame
+                ZStack {
+                    // Outer border
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(QuranTheme.pageBorder, lineWidth: 2)
+
+                    // Inner border
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(QuranTheme.pageBorder.opacity(0.5), lineWidth: 1)
+                        .padding(4)
+
+                    // Corner ornaments
+                    GeometryReader { geo in
+                        ForEach(0..<4, id: \.self) { corner in
+                            CornerOrnament()
+                                .position(cornerPosition(for: corner, in: geo.size))
+                        }
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func cornerPosition(for corner: Int, in size: CGSize) -> CGPoint {
+        switch corner {
+        case 0: return CGPoint(x: 16, y: 16) // Top-left
+        case 1: return CGPoint(x: size.width - 16, y: 16) // Top-right
+        case 2: return CGPoint(x: 16, y: size.height - 16) // Bottom-left
+        case 3: return CGPoint(x: size.width - 16, y: size.height - 16) // Bottom-right
+        default: return .zero
+        }
+    }
+}
+
+struct CornerOrnament: View {
+    var body: some View {
+        Circle()
+            .fill(QuranTheme.gold)
+            .frame(width: 8, height: 8)
+            .overlay(
+                Circle()
+                    .stroke(QuranTheme.goldDark, lineWidth: 1)
+            )
+    }
+}
+
+private struct PageSection: Identifiable {
+    let surah: Surah
+    let showSurahBanner: Bool
+    let showBismillah: Bool
+    let newJuzNumber: Int?
+    var ayahs: [PageAyah]
+
+    var id: String {
+        "\(surah.id)-\(ayahs.first?.ayah.number ?? 0)-\(newJuzNumber ?? 0)"
+    }
+}
+
+#Preview {
+    PageContentView(page: QuranPage(
+        pageNumber: 1,
+        ayahs: [
+            PageAyah(
+                surah: Surah(
+                    id: 1,
+                    name: "سُورَةُ ٱلْفَاتِحَةِ",
+                    englishName: "Al-Faatiha",
+                    englishTranslation: "The Opening",
+                    ayahCount: 7,
+                    revelationType: "Meccan",
+                    ayahs: []
+                ),
+                ayah: Ayah(number: 1, arabicText: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", translation: "", page: 1, juz: 1),
+                isFirstAyahOfSurah: true
+            ),
+            PageAyah(
+                surah: Surah(
+                    id: 1,
+                    name: "سُورَةُ ٱلْفَاتِحَةِ",
+                    englishName: "Al-Faatiha",
+                    englishTranslation: "The Opening",
+                    ayahCount: 7,
+                    revelationType: "Meccan",
+                    ayahs: []
+                ),
+                ayah: Ayah(number: 2, arabicText: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ", translation: "", page: 1, juz: 1),
+                isFirstAyahOfSurah: false
+            )
+        ]
+    ))
+}

@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct QuranMajeedApp: App {
+    @StateObject private var dataService = QuranDataService()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(dataService)
         }
     }
 }
