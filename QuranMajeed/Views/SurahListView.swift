@@ -8,50 +8,45 @@ import SwiftUI
 struct SurahListSheet: View {
     @EnvironmentObject var dataService: QuranDataService
     @Environment(\.dismiss) private var dismiss
-    @State private var searchText = ""
 
     let onSurahSelected: (Surah) -> Void
 
-    var filteredSurahs: [Surah] {
-        if searchText.isEmpty {
-            return dataService.surahs
-        }
-        return dataService.surahs.filter { surah in
-            surah.englishName.localizedCaseInsensitiveContains(searchText) ||
-            surah.englishTranslation.localizedCaseInsensitiveContains(searchText) ||
-            surah.name.contains(searchText) ||
-            String(surah.id).contains(searchText)
-        }
-    }
-
     var body: some View {
         NavigationStack {
-            List(filteredSurahs) { surah in
-                Button {
-                    onSurahSelected(surah)
-                    dismiss()
-                } label: {
-                    SurahRowView(
-                        surah: surah,
-                        pageNumber: dataService.getStartingPage(for: surah)
-                    )
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(dataService.surahs) { surah in
+                        Button {
+                            onSurahSelected(surah)
+                            dismiss()
+                        } label: {
+                            SurahRowView(
+                                surah: surah,
+                                pageNumber: dataService.getStartingPage(for: surah)
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider()
+                            .background(QuranTheme.pageBorder.opacity(0.3))
+                            .padding(.horizontal, 16)
+                    }
                 }
-                .buttonStyle(.plain)
+                .padding(.vertical, 8)
             }
-            .listStyle(.plain)
-            .searchable(text: $searchText, prompt: "Search surahs")
-            .navigationTitle("Surahs")
+            .background(QuranTheme.pageBackground)
+            .navigationTitle("Surahs - السور")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(QuranTheme.pageBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 28))
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(.secondary)
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.gray)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -67,26 +62,27 @@ struct SurahRowView: View {
             // Surah number
             Text("\(surah.id)")
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(QuranTheme.bannerText)
                 .frame(width: 40, height: 40)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.accentColor)
+                        .fill(QuranTheme.bannerBackground)
                 )
 
             // Surah info
             VStack(alignment: .leading, spacing: 4) {
                 Text(surah.englishName)
                     .font(.headline)
+                    .foregroundStyle(QuranTheme.arabicText)
                 HStack {
                     Text(surah.englishTranslation)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(QuranTheme.secondaryText)
                     Text("•")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(QuranTheme.secondaryText)
                     Text("Page \(pageNumber)")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(QuranTheme.secondaryText)
                 }
             }
 
@@ -94,10 +90,13 @@ struct SurahRowView: View {
 
             // Arabic name
             Text(surah.name)
-                .font(.title2)
+                .font(QuranTheme.arabicFont(size: 20))
+                .foregroundStyle(QuranTheme.arabicText)
                 .environment(\.layoutDirection, .rightToLeft)
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(QuranTheme.pageBackground)
     }
 }
 
