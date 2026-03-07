@@ -7,6 +7,7 @@ import SwiftUI
 
 struct QuranPageView: View {
     @EnvironmentObject var dataService: QuranDataService
+    @StateObject private var rateAppManager = RateAppManager()
     @State private var currentPage: Int = 1
     @State private var showSurahList = false
 
@@ -40,6 +41,25 @@ struct QuranPageView: View {
         }
         .onAppear {
             currentPage = dataService.lastReadPage
+            rateAppManager.setAppLaunchTime()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                rateAppManager.checkShouldShowRatingPromptAfterDelay()
+            }
+        }
+        .overlay {
+            if rateAppManager.shouldShowRatingPrompt {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        rateAppManager.dismissPrompt()
+                    }
+
+                RatingPromptView(
+                    onRate: rateAppManager.showRatingPrompt,
+                    onDismiss: rateAppManager.dismissPrompt,
+                    onMarkAsRated: rateAppManager.markAsRated
+                )
+            }
         }
         .sheet(isPresented: $showSurahList) {
             SurahListSheet(
