@@ -9,7 +9,9 @@ struct ControlToolbar: View {
     let currentPage: Int
     let totalPages: Int
     let juz: Int
+    let isBookmarked: Bool
     let onSurahListTap: () -> Void
+    let onBookmarkTap: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,39 +19,37 @@ struct ControlToolbar: View {
                 .fill(QuranTheme.pageBorder)
                 .frame(height: 1)
 
-            HStack {
+            HStack(alignment: .center) {
                 Button(action: onSurahListTap) {
                     Image(systemName: "list.bullet")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 22, weight: .medium))
                         .foregroundStyle(QuranTheme.goldDark)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 44)
                 }
 
                 Spacer()
 
                 VStack(spacing: 2) {
-                    Text("Page \(currentPage) of \(totalPages)")
+                    Text("Page \(currentPage) • صفحة \(currentPage.arabicNumeral)")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(QuranTheme.arabicText)
-                    Text("Juz \(juz)")
+                    Text("Juz \(juz) • الجزء \(juz.arabicNumeral)")
                         .font(.caption)
                         .foregroundStyle(QuranTheme.secondaryText)
                 }
 
                 Spacer()
 
-                Button(action: {}) {
-                    Image(systemName: "bookmark")
-                        .font(.system(size: 18, weight: .medium))
+                Button(action: onBookmarkTap) {
+                    Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+                        .font(.system(size: 22, weight: .medium))
                         .foregroundStyle(QuranTheme.goldDark)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 44)
                 }
-                .disabled(true)
-                .opacity(0.4)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.vertical, 6)
         }
         .background(QuranTheme.pageBackground)
         .ignoresSafeArea(edges: .bottom)
@@ -63,7 +63,9 @@ struct ControlToolbar: View {
             currentPage: 1,
             totalPages: 604,
             juz: 1,
-            onSurahListTap: {}
+            isBookmarked: false,
+            onSurahListTap: {},
+            onBookmarkTap: {}
         )
     }
     .background(QuranTheme.pageBackground)

@@ -42,9 +42,14 @@ struct QuranPageView: View {
             currentPage = dataService.lastReadPage
         }
         .sheet(isPresented: $showSurahList) {
-            SurahListSheet(onSurahSelected: { surah in
-                navigateToSurah(surah)
-            })
+            SurahListSheet(
+                onSurahSelected: { surah in
+                    navigateToSurah(surah)
+                },
+                onPageSelected: { page in
+                    navigateToPage(page)
+                }
+            )
         }
     }
 
@@ -67,14 +72,25 @@ struct QuranPageView: View {
             currentPage: currentPage,
             totalPages: QuranDataService.totalPages,
             juz: dataService.getPage(number: currentPage)?.juz ?? 1,
+            isBookmarked: dataService.isBookmarked(page: currentPage),
             onSurahListTap: {
                 showSurahList = true
+            },
+            onBookmarkTap: {
+                dataService.toggleBookmark(page: currentPage)
             }
         )
     }
 
     private func navigateToSurah(_ surah: Surah) {
         let page = dataService.getStartingPage(for: surah)
+        withAnimation {
+            currentPage = page
+        }
+        showSurahList = false
+    }
+
+    private func navigateToPage(_ page: Int) {
         withAnimation {
             currentPage = page
         }

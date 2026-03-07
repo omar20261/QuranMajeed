@@ -20,19 +20,41 @@ class QuranDataService: ObservableObject {
         }
     }
 
+    // Bookmarked pages
+    @Published var bookmarkedPages: Set<Int> {
+        didSet {
+            let array = Array(bookmarkedPages)
+            UserDefaults.standard.set(array, forKey: "bookmarkedPages")
+        }
+    }
+
     // Total pages in the Quran
     static let totalPages = 604
 
     init() {
-        lastReadPage = UserDefaults.standard.integer(forKey: "lastReadPage")
-        if lastReadPage == 0 {
-            lastReadPage = 1
-        }
+        let savedPage = UserDefaults.standard.integer(forKey: "lastReadPage")
+        lastReadPage = savedPage == 0 ? 1 : savedPage
+
+        let savedBookmarks = UserDefaults.standard.array(forKey: "bookmarkedPages") as? [Int] ?? []
+        bookmarkedPages = Set(savedBookmarks)
+
         loadQuranData()
     }
 
     func saveReadPosition(page: Int) {
         lastReadPage = page
+    }
+
+    func toggleBookmark(page: Int) {
+        if bookmarkedPages.contains(page) {
+            bookmarkedPages.remove(page)
+        } else {
+            bookmarkedPages.insert(page)
+        }
+    }
+
+    func isBookmarked(page: Int) -> Bool {
+        bookmarkedPages.contains(page)
     }
 
     func getStartingPage(for surah: Surah) -> Int {
