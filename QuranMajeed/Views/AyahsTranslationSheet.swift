@@ -7,7 +7,8 @@ import SwiftUI
 
 struct AyahsTranslationSheet: View {
     let ayahs: [Ayah]
-    let surahName: String
+    let surahEnglishName: String
+    let surahArabicName: String
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -20,10 +21,17 @@ struct AyahsTranslationSheet: View {
                 .padding(.bottom, 12)
 
             // Header
-            Text(surahName)
-                .font(.headline)
-                .foregroundColor(QuranTheme.arabicText)
-                .padding(.bottom, 12)
+            HStack(spacing: 8) {
+                Text(surahEnglishName)
+                    .font(.headline)
+                    .foregroundColor(QuranTheme.secondaryText)
+                Text("•")
+                    .foregroundColor(QuranTheme.gold)
+                Text(surahArabicName)
+                    .font(QuranTheme.arabicFont(size: 20))
+                    .foregroundColor(QuranTheme.arabicText)
+            }
+            .padding(.bottom, 12)
 
             Divider()
 
@@ -45,20 +53,13 @@ struct AyahsTranslationSheet: View {
 
     private func ayahCard(_ ayah: Ayah) -> some View {
         VStack(spacing: 16) {
-            // Ayah number
-            HStack {
-                Spacer()
-                Text("\(ayah.number.arabicNumeral)")
-                    .font(QuranTheme.arabicFont(size: 16))
-                    .foregroundColor(QuranTheme.pageBackground)
-                    .frame(width: 32, height: 32)
-                    .background(Circle().fill(QuranTheme.gold))
-            }
-
-            // Arabic text
-            Text(ayah.arabicText)
+            // Arabic text with ayah number at the end
+            (Text(ayah.arabicText)
                 .font(QuranTheme.arabicFont(size: 24))
                 .foregroundColor(QuranTheme.arabicText)
+            + Text(" \u{FD3F}\(ayah.number.arabicNumeral)\u{FD3E}")
+                .font(QuranTheme.arabicFont(size: 20))
+                .foregroundColor(QuranTheme.gold))
                 .multilineTextAlignment(.center)
                 .lineSpacing(12)
                 .frame(maxWidth: .infinity)
@@ -91,7 +92,8 @@ struct AyahsTranslationSheet: View {
                     Ayah(number: 3, arabicText: "ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", translation: "The Entirely Merciful, the Especially Merciful,", page: 1, juz: 1),
                     Ayah(number: 4, arabicText: "مَٰلِكِ يَوْمِ ٱلدِّينِ", translation: "Sovereign of the Day of Recompense.", page: 1, juz: 1),
                 ],
-                surahName: "Al-Faatiha"
+                surahEnglishName: "Al-Faatiha",
+                surahArabicName: "سُورَةُ ٱلْفَاتِحَةِ"
             )
         }
 }

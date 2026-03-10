@@ -8,7 +8,8 @@ import SwiftUI
 struct SelectedAyah: Identifiable {
     let id = UUID()
     let ayah: Ayah
-    let surahName: String
+    let surahEnglishName: String
+    let surahArabicName: String
 }
 
 struct PageContentView: View {
@@ -16,11 +17,11 @@ struct PageContentView: View {
     @State private var selectedAyah: SelectedAyah?
 
     // Store ayahs by surah-ayah key for lookup when tapped
-    private var ayahLookup: [String: (ayah: Ayah, surahName: String)] {
-        var lookup: [String: (Ayah, String)] = [:]
+    private var ayahLookup: [String: (ayah: Ayah, surahEnglishName: String, surahArabicName: String)] {
+        var lookup: [String: (Ayah, String, String)] = [:]
         for pageAyah in page.ayahs {
             let key = "\(pageAyah.surah.id)-\(pageAyah.ayah.number)"
-            lookup[key] = (pageAyah.ayah, pageAyah.surah.englishName)
+            lookup[key] = (pageAyah.ayah, pageAyah.surah.englishName, pageAyah.surah.name)
         }
         return lookup
     }
@@ -70,7 +71,11 @@ struct PageContentView: View {
         }
         .environment(\.layoutDirection, .rightToLeft)
         .sheet(item: $selectedAyah) { selected in
-            AyahsTranslationSheet(ayahs: [selected.ayah], surahName: selected.surahName)
+            AyahsTranslationSheet(
+                ayahs: [selected.ayah],
+                surahEnglishName: selected.surahEnglishName,
+                surahArabicName: selected.surahArabicName
+            )
         }
     }
 
@@ -133,7 +138,11 @@ struct PageContentView: View {
                 if url.scheme == "ayah",
                    let host = url.host,
                    let data = ayahLookup[host] {
-                    selectedAyah = SelectedAyah(ayah: data.ayah, surahName: data.surahName)
+                    selectedAyah = SelectedAyah(
+                        ayah: data.ayah,
+                        surahEnglishName: data.surahEnglishName,
+                        surahArabicName: data.surahArabicName
+                    )
                     return .handled
                 }
                 return .discarded
