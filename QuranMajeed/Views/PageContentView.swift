@@ -16,28 +16,37 @@ struct PageContentView: View {
 
             // Page frame
             PageFrameView {
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .center, spacing: 0) {
-                        ForEach(groupedContent, id: \.id) { section in
-                            // Juz marker if new juz starts
-                            if let juzNumber = section.newJuzNumber {
-                                JuzMarkerView(juzNumber: juzNumber)
-                            }
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .center, spacing: 0) {
+                            Color.clear
+                                .frame(height: 0)
+                                .id("top")
 
-                            if section.showSurahBanner {
-                                SurahBannerView(surah: section.surah)
-                            }
+                            ForEach(groupedContent, id: \.id) { section in
+                                // Juz marker if new juz starts
+                                if let juzNumber = section.newJuzNumber {
+                                    JuzMarkerView(juzNumber: juzNumber)
+                                }
 
-                            if section.showBismillah {
-                                BismillahView()
-                            }
+                                if section.showSurahBanner {
+                                    SurahBannerView(surah: section.surah)
+                                }
 
-                            flowingTextView(for: section.ayahs)
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 16)
+                                if section.showBismillah {
+                                    BismillahView()
+                                }
+
+                                flowingTextView(for: section.ayahs)
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 16)
+                            }
                         }
+                        .padding(.vertical, 16)
                     }
-                    .padding(.vertical, 16)
+                    .onAppear {
+                        proxy.scrollTo("top", anchor: .top)
+                    }
                 }
             }
             .padding(12)
