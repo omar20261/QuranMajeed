@@ -5,8 +5,25 @@
 
 import SwiftUI
 
+struct SelectedAyah: Identifiable {
+    let id = UUID()
+    let ayah: Ayah
+    let surahName: String
+}
+
 struct PageContentView: View {
     let page: QuranPage
+    @State private var selectedAyah: SelectedAyah?
+
+    // Store ayahs by surah-ayah key for lookup when tapped
+    private var ayahLookup: [String: (ayah: Ayah, surahName: String)] {
+        var lookup: [String: (Ayah, String)] = [:]
+        for pageAyah in page.ayahs {
+            let key = "\(pageAyah.surah.id)-\(pageAyah.ayah.number)"
+            lookup[key] = (pageAyah.ayah, pageAyah.surah.englishName)
+        }
+        return lookup
+    }
 
     var body: some View {
         ZStack {
@@ -37,7 +54,7 @@ struct PageContentView: View {
                                     BismillahView()
                                 }
 
-                                flowingTextView(for: section.ayahs)
+                                flowingTextView(for: section.ayahs, surahName: section.surah.englishName)
                                     .padding(.horizontal, 16)
                                     .padding(.bottom, 16)
                             }
@@ -52,6 +69,9 @@ struct PageContentView: View {
             .padding(12)
         }
         .environment(\.layoutDirection, .rightToLeft)
+        .sheet(item: $selectedAyah) { selected in
+            AyahsTranslationSheet(ayahs: [selected.ayah], surahName: selected.surahName)
+        }
     }
 
     private var groupedContent: [PageSection] {
@@ -93,37 +113,65 @@ struct PageContentView: View {
     }
 
     private let bismillahPattern = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
+    private let kfgqpcBismillahPattern = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ"
 
     @ViewBuilder
-    private func flowingTextView(for ayahs: [PageAyah]) -> some View {
+    private func flowingTextView(for ayahs: [PageAyah], surahName: String) -> some View {
         // Filter out first ayah of Surah 1 (it's only Bismillah)
         let displayAyahs = ayahs.filter { pageAyah in
             !(pageAyah.surah.id == 1 && pageAyah.ayah.number == 1)
         }
 
-        let combinedText = displayAyahs.reduce(Text("")) { result, pageAyah in
-            // Remove Bismillah from first ayah text (shown in decoration)
-            var text = pageAyah.ayah.arabicText
-            if pageAyah.ayah.number == 1 && pageAyah.surah.id != 9 {
-                text = text.replacingOccurrences(of: bismillahPattern, with: "").trimmingCharacters(in: .whitespaces)
-            }
+        let attributedString = buildAttributedString(for: displayAyahs)
 
-            let ayahText = Text(text)
-                .font(QuranTheme.arabicFont(size: 24))
-                .foregroundColor(QuranTheme.arabicText)
-
-            // Using ornate Quran parentheses with number inside ﴿١﴾
-            let marker = Text(" \u{FD3F}\(pageAyah.ayah.number.arabicNumeral)\u{FD3E} ")
-                .font(QuranTheme.arabicFont(size: 20))
-                .foregroundColor(QuranTheme.gold)
-
-            return result + ayahText + marker
-        }
-
-        combinedText
+        Text(attributedString)
             .lineSpacing(20)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
+            .tint(QuranTheme.arabicText)
+            .environment(\.openURL, OpenURLAction { url in
+                if url.scheme == "ayah",
+                   let host = url.host,
+                   let data = ayahLookup[host] {
+                    selectedAyah = SelectedAyah(ayah: data.ayah, surahName: data.surahName)
+                    return .handled
+                }
+                return .discarded
+            })
+    }
+
+    private func buildAttributedString(for ayahs: [PageAyah]) -> AttributedString {
+        var result = AttributedString()
+
+        for pageAyah in ayahs {
+            // Remove Bismillah from first ayah text (shown in decoration)
+            var text = pageAyah.ayah.arabicText
+            if pageAyah.ayah.number == 1 && pageAyah.surah.id != 9 {
+                text = text
+                    .replacingOccurrences(of: bismillahPattern, with: "")
+                    .replacingOccurrences(of: kfgqpcBismillahPattern, with: "")
+                    .trimmingCharacters(in: .whitespaces)
+            }
+
+            let linkURL = URL(string: "ayah://\(pageAyah.surah.id)-\(pageAyah.ayah.number)")
+
+            // Ayah text (tappable)
+            var ayahText = AttributedString(text)
+            ayahText.font = QuranTheme.uiArabicFont(size: 24)
+            ayahText.foregroundColor = QuranTheme.arabicText
+            ayahText.link = linkURL
+            result.append(ayahText)
+
+            // Marker (also tappable, same link)
+            let markerString = " \u{FD3F}\(pageAyah.ayah.number.arabicNumeral)\u{FD3E} "
+            var marker = AttributedString(markerString)
+            marker.font = QuranTheme.uiArabicFont(size: 20)
+            marker.foregroundColor = QuranTheme.gold
+            marker.link = linkURL
+            result.append(marker)
+        }
+
+        return result
     }
 }
 

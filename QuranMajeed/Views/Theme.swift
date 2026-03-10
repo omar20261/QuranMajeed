@@ -27,4 +27,9 @@ enum QuranTheme {
     static func arabicFont(size: CGFloat) -> Font {
         .custom("KFGQPCHAFSUthmanicScript-Regula", size: size)
     }
+
+    // UIFont version for AttributedString
+    static func uiArabicFont(size: CGFloat) -> UIFont {
+        UIFont(name: "KFGQPCHAFSUthmanicScript-Regula", size: size) ?? .systemFont(ofSize: size)
+    }
 }
