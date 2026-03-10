@@ -96,7 +96,7 @@ struct JuzMarkerView: View {
                 .frame(height: 1)
 
             Text("۞ الجزء \(juzNumber.arabicNumeral) ۞")
-                .font(QuranTheme.arabicFont(size: 14))
+                .font(QuranTheme.arabicFont(size: 16))
                 .foregroundStyle(QuranTheme.goldDark)
 
             Rectangle()
