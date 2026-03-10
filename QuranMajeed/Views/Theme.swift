@@ -25,6 +25,6 @@ enum QuranTheme {
 
     // Fonts
     static func arabicFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .regular, design: .serif)
+        .custom("KFGQPCHAFSUthmanicScript-Regula", size: size)
     }
 }
