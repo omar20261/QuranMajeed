@@ -58,7 +58,7 @@ struct AyahsTranslationSheet: View {
                 .font(QuranTheme.arabicFont(size: 24))
                 .foregroundColor(QuranTheme.arabicText)
             + Text(" \u{FD3F}\(ayah.number.arabicNumeral)\u{FD3E}")
-                .font(QuranTheme.arabicFont(size: 20))
+                .font(QuranTheme.arabicFont(size: 28))
                 .foregroundColor(QuranTheme.gold))
                 .multilineTextAlignment(.center)
                 .lineSpacing(12)
