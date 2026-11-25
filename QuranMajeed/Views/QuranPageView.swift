@@ -7,9 +7,11 @@ import SwiftUI
 
 struct QuranPageView: View {
     @EnvironmentObject var dataService: QuranDataService
+    @EnvironmentObject var audioService: QuranAudioService
     @StateObject private var rateAppManager = RateAppManager()
     @State private var currentPage: Int = 1
     @State private var showSurahList = false
+    @State private var showAudioPlayer = false
 
     var body: some View {
         ZStack {
@@ -35,6 +37,14 @@ struct QuranPageView: View {
             } else {
                 VStack(spacing: 0) {
                     pageView
+
+                    // Mini player appears above toolbar when audio is active
+                    if audioService.isPlayerVisible {
+                        AudioMiniPlayerView {
+                            showAudioPlayer = true
+                        }
+                    }
+
                     toolbar
                 }
             }
@@ -42,8 +52,16 @@ struct QuranPageView: View {
         .onAppear {
             currentPage = dataService.lastReadPage
             rateAppManager.setAppLaunchTime()
+            if !dataService.surahs.isEmpty {
+                audioService.configure(surahs: dataService.surahs)
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 rateAppManager.checkShouldShowRatingPromptAfterDelay()
+            }
+        }
+        .onChange(of: dataService.isLoading) { loading in
+            if !loading {
+                audioService.configure(surahs: dataService.surahs)
             }
         }
         .overlay {
@@ -71,6 +89,9 @@ struct QuranPageView: View {
                 }
             )
         }
+        .sheet(isPresented: $showAudioPlayer) {
+            AudioPlayerView()
+        }
     }
 
     private var pageView: some View {
@@ -93,11 +114,23 @@ struct QuranPageView: View {
             totalPages: QuranDataService.totalPages,
             juz: dataService.getPage(number: currentPage)?.juz ?? 1,
             isBookmarked: dataService.isBookmarked(page: currentPage),
+            isAudioPlaying: audioService.isPlayerVisible,
             onSurahListTap: {
                 showSurahList = true
             },
             onBookmarkTap: {
                 dataService.toggleBookmark(page: currentPage)
+            },
+            onAudioTap: {
+                if audioService.isPlayerVisible {
+                    showAudioPlayer = true
+                } else {
+                    // Start playing the first surah on the current page
+                    if let surahId = dataService.getPage(number: currentPage)?.ayahs.first?.surah.id {
+                        audioService.play(surahId: surahId)
+                        showAudioPlayer = true
+                    }
+                }
             }
         )
     }
@@ -121,4 +154,5 @@ struct QuranPageView: View {
 #Preview {
     QuranPageView()
         .environmentObject(QuranDataService())
+        .environmentObject(QuranAudioService())
 }

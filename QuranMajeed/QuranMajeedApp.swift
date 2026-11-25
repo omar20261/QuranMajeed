@@ -10,11 +10,13 @@ import SwiftUI
 @main
 struct QuranMajeedApp: App {
     @StateObject private var dataService = QuranDataService()
+    @StateObject private var audioService = QuranAudioService()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(dataService)
+                .environmentObject(audioService)
         }
     }
 }

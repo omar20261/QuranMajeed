@@ -10,8 +10,10 @@ struct ControlToolbar: View {
     let totalPages: Int
     let juz: Int
     let isBookmarked: Bool
+    let isAudioPlaying: Bool
     let onSurahListTap: () -> Void
     let onBookmarkTap: () -> Void
+    let onAudioTap: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,11 +22,21 @@ struct ControlToolbar: View {
                 .frame(height: 1)
 
             HStack(alignment: .center) {
-                Button(action: onSurahListTap) {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(QuranTheme.goldDark)
-                        .frame(width: 44)
+                // Left: list + audio
+                HStack(spacing: 0) {
+                    Button(action: onSurahListTap) {
+                        Image(systemName: "list.bullet")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(QuranTheme.goldDark)
+                            .frame(width: 44)
+                    }
+
+                    Button(action: onAudioTap) {
+                        Image(systemName: isAudioPlaying ? "headphones.circle.fill" : "headphones")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(isAudioPlaying ? QuranTheme.gold : QuranTheme.goldDark)
+                            .frame(width: 44)
+                    }
                 }
 
                 Spacer()
@@ -64,8 +76,10 @@ struct ControlToolbar: View {
             totalPages: 604,
             juz: 1,
             isBookmarked: false,
+            isAudioPlaying: false,
             onSurahListTap: {},
-            onBookmarkTap: {}
+            onBookmarkTap: {},
+            onAudioTap: {}
         )
     }
     .background(QuranTheme.pageBackground)
