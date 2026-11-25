@@ -50,6 +50,9 @@ class QuranAudioService: ObservableObject {
     @Published var duration: TimeInterval = 0
     @Published var isBuffering = false
 
+    // MARK: - Verse Playback
+    @Published var playingVerseKey: String?  // "surahId:ayahNumber" while a verse is playing
+
     // MARK: - Downloads
     @Published var downloadStates: [String: DownloadState] = [:]
 
@@ -113,6 +116,12 @@ class QuranAudioService: ObservableObject {
 
     // MARK: - Playback
 
+    func prepare(surahId: Int) {
+        currentSurahId = surahId
+        isPlayerVisible = true
+        playingVerseKey = nil
+    }
+
     func play(surahId: Int) {
         guard let reciter = selectedReciter else { return }
 
@@ -121,6 +130,7 @@ class QuranAudioService: ObservableObject {
         isBuffering = true
         currentTime = 0
         duration = 0
+        playingVerseKey = nil
 
         let audioURL: URL
         if let local = localFileURL(surahId: surahId, reciterId: reciter.id),
@@ -137,24 +147,23 @@ class QuranAudioService: ObservableObject {
         let item = AVPlayerItem(url: audioURL)
         player = AVPlayer(playerItem: item)
 
-        // Buffering state
         item.publisher(for: \.status)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
-                if status == .readyToPlay { self?.isBuffering = false }
+                guard let self, status == .readyToPlay else { return }
+                self.isBuffering = false
             }
             .store(in: &cancellables)
 
-        // Playback ended → auto-play next
         NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime, object: item)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.isPlaying = false
-                self?.nextSurah()
+                guard let self else { return }
+                self.isPlaying = false
+                self.nextSurah()
             }
             .store(in: &cancellables)
 
-        // Progress updates
         timeObserverToken = player?.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
             queue: .main
@@ -185,7 +194,13 @@ class QuranAudioService: ObservableObject {
     }
 
     func togglePlayPause() {
-        isPlaying ? pause() : resume()
+        if isPlaying {
+            pause()
+        } else if player != nil {
+            resume()
+        } else if let surahId = currentSurahId {
+            play(surahId: surahId)
+        }
     }
 
     func seek(to fraction: Double) {
@@ -195,6 +210,7 @@ class QuranAudioService: ObservableObject {
     }
 
     func nextSurah() {
+        guard playingVerseKey == nil else { return }
         guard let current = currentSurahId, current < 114 else { return }
         play(surahId: current + 1)
     }
@@ -205,6 +221,71 @@ class QuranAudioService: ObservableObject {
             seek(to: 0)
         } else if current > 1 {
             play(surahId: current - 1)
+        }
+    }
+
+    func playVerse(surahId: Int, ayahNumber: Int) {
+        let verseKey = "\(surahId):\(ayahNumber)"
+        if playingVerseKey == verseKey {
+            togglePlayPause()
+            return
+        }
+
+        Task {
+            guard let reciterId = selectedReciter?.id else { return }
+            let url = await VerseAudioService.shared.verseURL(
+                surahId: surahId,
+                ayahNumber: ayahNumber,
+                mp3quranReciterId: reciterId
+            )
+            guard let url else { return }
+
+            stopCurrentPlayer()
+            playingVerseKey = verseKey
+            currentSurahId = surahId
+            isPlayerVisible = true
+            isBuffering = true
+            currentTime = 0
+            duration = 0
+
+            let item = AVPlayerItem(url: url)
+            player = AVPlayer(playerItem: item)
+
+            item.publisher(for: \.status)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] status in
+                    if status == .readyToPlay { self?.isBuffering = false }
+                }
+                .store(in: &cancellables)
+
+            // Stop and clean up when verse ends
+            NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime, object: item)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    guard let self else { return }
+                    if let token = self.timeObserverToken {
+                        self.player?.removeTimeObserver(token)
+                        self.timeObserverToken = nil
+                    }
+                    self.player = nil
+                    self.isPlaying = false
+                    self.playingVerseKey = nil
+                }
+                .store(in: &cancellables)
+
+            timeObserverToken = player?.addPeriodicTimeObserver(
+                forInterval: CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
+                queue: .main
+            ) { [weak self] time in
+                guard let self else { return }
+                self.currentTime = time.seconds
+                if let d = self.player?.currentItem?.duration, d.isNumeric, d.seconds > 0 {
+                    self.duration = d.seconds
+                }
+            }
+
+            player?.play()
+            isPlaying = true
         }
     }
 

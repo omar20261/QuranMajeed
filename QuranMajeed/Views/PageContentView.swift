@@ -7,6 +7,7 @@ import SwiftUI
 
 struct SelectedAyah: Identifiable {
     let id = UUID()
+    let surahId: Int
     let ayah: Ayah
     let surahEnglishName: String
     let surahArabicName: String
@@ -17,11 +18,11 @@ struct PageContentView: View {
     @State private var selectedAyah: SelectedAyah?
 
     // Store ayahs by surah-ayah key for lookup when tapped
-    private var ayahLookup: [String: (ayah: Ayah, surahEnglishName: String, surahArabicName: String)] {
-        var lookup: [String: (Ayah, String, String)] = [:]
+    private var ayahLookup: [String: (surahId: Int, ayah: Ayah, surahEnglishName: String, surahArabicName: String)] {
+        var lookup: [String: (Int, Ayah, String, String)] = [:]
         for pageAyah in page.ayahs {
             let key = "\(pageAyah.surah.id)-\(pageAyah.ayah.number)"
-            lookup[key] = (pageAyah.ayah, pageAyah.surah.englishName, pageAyah.surah.name)
+            lookup[key] = (pageAyah.surah.id, pageAyah.ayah, pageAyah.surah.englishName, pageAyah.surah.name)
         }
         return lookup
     }
@@ -72,6 +73,7 @@ struct PageContentView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .sheet(item: $selectedAyah) { selected in
             AyahsTranslationSheet(
+                surahId: selected.surahId,
                 ayahs: [selected.ayah],
                 surahEnglishName: selected.surahEnglishName,
                 surahArabicName: selected.surahArabicName
@@ -139,6 +141,7 @@ struct PageContentView: View {
                    let host = url.host,
                    let data = ayahLookup[host] {
                     selectedAyah = SelectedAyah(
+                        surahId: data.surahId,
                         ayah: data.ayah,
                         surahEnglishName: data.surahEnglishName,
                         surahArabicName: data.surahArabicName

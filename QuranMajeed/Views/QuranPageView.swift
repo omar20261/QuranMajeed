@@ -125,9 +125,8 @@ struct QuranPageView: View {
                 if audioService.isPlayerVisible {
                     showAudioPlayer = true
                 } else {
-                    // Start playing the first surah on the current page
                     if let surahId = dataService.getPage(number: currentPage)?.ayahs.first?.surah.id {
-                        audioService.play(surahId: surahId)
+                        audioService.prepare(surahId: surahId)
                         showAudioPlayer = true
                     }
                 }
