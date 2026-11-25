@@ -112,6 +112,17 @@ struct AudioPlayerView: View {
 
     private var progressSection: some View {
         VStack(spacing: 8) {
+            if let error = audioService.audioError {
+                HStack(spacing: 6) {
+                    Image(systemName: "wifi.slash")
+                        .font(.caption)
+                    Text(error)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                }
+                .foregroundStyle(.red.opacity(0.8))
+                .padding(.bottom, 4)
+            }
             Slider(
                 value: Binding(
                     get: { sliderValue },

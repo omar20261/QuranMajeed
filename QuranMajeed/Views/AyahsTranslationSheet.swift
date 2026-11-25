@@ -57,6 +57,7 @@ struct AyahsTranslationSheet: View {
     private func ayahCard(_ ayah: Ayah) -> some View {
         let verseKey = "\(surahId):\(ayah.number)"
         let isThisVersePlaying = audioService.playingVerseKey == verseKey
+        let canPlayVerse = audioService.isOnline
 
         return VStack(spacing: 16) {
             // Arabic text with ayah number at the end
@@ -86,13 +87,21 @@ struct AyahsTranslationSheet: View {
                 VStack(spacing: 6) {
                     ZStack {
                         Circle()
-                            .fill(isThisVersePlaying ? QuranTheme.goldDark : QuranTheme.goldLight.opacity(0.3))
+                            .fill(
+                                isThisVersePlaying ? QuranTheme.goldDark
+                                : canPlayVerse ? QuranTheme.goldLight.opacity(0.3)
+                                : QuranTheme.pageBorder.opacity(0.15)
+                            )
                             .frame(width: 56, height: 56)
                             .overlay(Circle().stroke(QuranTheme.pageBorder.opacity(0.5), lineWidth: 1))
 
                         if isThisVersePlaying && audioService.isBuffering {
                             ProgressView()
                                 .tint(isThisVersePlaying ? .white : QuranTheme.goldDark)
+                        } else if !canPlayVerse {
+                            Image(systemName: "wifi.slash")
+                                .font(.system(size: 18))
+                                .foregroundStyle(QuranTheme.secondaryText.opacity(0.5))
                         } else {
                             Image(systemName: isThisVersePlaying && audioService.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 22))
@@ -101,11 +110,16 @@ struct AyahsTranslationSheet: View {
                         }
                     }
 
-                    Text(isThisVersePlaying && audioService.isPlaying ? "Pause" : "Listen")
+                    Text(!canPlayVerse ? "No internet" : isThisVersePlaying && audioService.isPlaying ? "Pause" : "Listen")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(isThisVersePlaying ? QuranTheme.goldDark : QuranTheme.secondaryText)
+                        .foregroundStyle(
+                            !canPlayVerse ? QuranTheme.secondaryText.opacity(0.5)
+                            : isThisVersePlaying ? QuranTheme.goldDark
+                            : QuranTheme.secondaryText
+                        )
                 }
             }
+            .disabled(!canPlayVerse)
             .frame(maxWidth: .infinity)
 
             if ayah.id != ayahs.last?.id {

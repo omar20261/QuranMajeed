@@ -7,6 +7,7 @@ import AVFoundation
 import Combine
 import Foundation
 import MediaPlayer
+import Network
 
 enum DownloadState: Equatable {
     case notDownloaded
@@ -51,6 +52,8 @@ class QuranAudioService: ObservableObject {
     @Published var isPlaying = false
     @Published var isPlayerVisible = false
     @Published var currentTime: TimeInterval = 0
+    @Published var audioError: String?
+    @Published var isOnline: Bool = true
     @Published var duration: TimeInterval = 0
     @Published var isBuffering = false
 
@@ -67,6 +70,8 @@ class QuranAudioService: ObservableObject {
     private var surahs: [Surah] = []
     private var downloadTasks: [String: URLSessionDownloadTask] = [:]
     private var downloadObservations: [String: NSKeyValueObservation] = [:]
+    private let networkMonitor = NWPathMonitor()
+    private let networkQueue = DispatchQueue(label: "NetworkMonitor")
 
     init() {
         setupAudioSession()
@@ -76,6 +81,7 @@ class QuranAudioService: ObservableObject {
             selectedReciter = Reciter.defaultReciter
         }
         setupRemoteControls()
+        setupNetworkMonitor()
     }
 
     func configure(surahs: [Surah]) {
@@ -96,6 +102,15 @@ class QuranAudioService: ObservableObject {
                 print("Audio session error: \(error)")
             }
         }
+    }
+
+    private func setupNetworkMonitor() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                self?.isOnline = path.status == .satisfied
+            }
+        }
+        networkMonitor.start(queue: networkQueue)
     }
 
     // MARK: - Reciters
@@ -125,6 +140,7 @@ class QuranAudioService: ObservableObject {
         currentTime = 0
         duration = 0
         playingVerseKey = nil
+        audioError = nil
 
         let audioURL: URL
         if let local = localFileURL(surahId: surahId, reciterId: reciter.id),
@@ -146,10 +162,14 @@ class QuranAudioService: ObservableObject {
             .sink { [weak self] status in
                 guard let self else { return }
                 switch status {
-                case .readyToPlay: self.isBuffering = false
+                case .readyToPlay:
+                    self.isBuffering = false
+                    self.audioError = nil
                 case .failed:
+                    self.stopCurrentPlayer()
                     self.isBuffering = false
                     self.isPlaying = false
+                    self.audioError = "Could not load audio. Check your internet connection."
                 default: break
                 }
             }
@@ -251,11 +271,14 @@ class QuranAudioService: ObservableObject {
             .sink { [weak self] status in
                 guard let self else { return }
                 switch status {
-                case .readyToPlay: self.isBuffering = false
+                case .readyToPlay:
+                    self.isBuffering = false
+                    self.audioError = nil
                 case .failed:
                     self.isBuffering = false
                     self.isPlaying = false
                     self.playingVerseKey = nil
+                    self.audioError = "Could not load verse audio. Check your internet connection."
                 default: break
                 }
             }
