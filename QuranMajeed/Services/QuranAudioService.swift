@@ -37,6 +37,10 @@ class QuranAudioService: ObservableObject {
             }
             if isPlaying, let surahId = currentSurahId {
                 play(surahId: surahId)
+            } else if isPlayerVisible {
+                stopCurrentPlayer()
+                currentTime = 0
+                duration = 0
             }
         }
     }
