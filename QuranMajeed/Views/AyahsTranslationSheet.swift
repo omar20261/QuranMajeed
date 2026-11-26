@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct AyahsTranslationSheet: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let surahId: Int
     let ayahs: [Ayah]
     let totalSurahAyahs: Int

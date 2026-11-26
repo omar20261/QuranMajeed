@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct SurahListSheet: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     @EnvironmentObject var dataService: QuranDataService
     @Environment(\.dismiss) private var dismiss
 
@@ -61,6 +62,7 @@ struct SurahListSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(QuranTheme.pageBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(QuranTheme.current.toolbarColorScheme, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: { dismiss() }) {
@@ -78,6 +80,7 @@ struct SurahListSheet: View {
 }
 
 struct SurahRowView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let surah: Surah
     let pageNumber: Int
 
@@ -125,6 +128,7 @@ struct SurahRowView: View {
 }
 
 struct BookmarksSectionView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let bookmarks: [Int]
     let dataService: QuranDataService
     let onPageSelected: (Int) -> Void
@@ -166,6 +170,7 @@ struct BookmarksSectionView: View {
 }
 
 struct BookmarkRowView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let page: Int
     let surahName: String
     let juz: Int
@@ -218,6 +223,7 @@ struct BookmarkRowView: View {
 }
 
 struct SectionHeaderView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let title: String
 
     var body: some View {

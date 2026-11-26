@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct DownloadManagerView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     @EnvironmentObject var audioService: QuranAudioService
     @EnvironmentObject var dataService: QuranDataService
     @Environment(\.dismiss) var dismiss
@@ -54,6 +55,9 @@ struct DownloadManagerView: View {
             }
             .navigationTitle("Downloads")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(QuranTheme.pageBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(QuranTheme.current.toolbarColorScheme, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {
@@ -94,6 +98,7 @@ struct DownloadManagerView: View {
 }
 
 struct DownloadSurahRow: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     @EnvironmentObject var audioService: QuranAudioService
     let surah: Surah
 

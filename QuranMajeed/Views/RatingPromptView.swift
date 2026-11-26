@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct RatingPromptView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let onRate: () -> Void
     let onDismiss: () -> Void
     let onMarkAsRated: () -> Void

@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct AudioMiniPlayerView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     @EnvironmentObject var audioService: QuranAudioService
     @EnvironmentObject var dataService: QuranDataService
     let onTap: () -> Void

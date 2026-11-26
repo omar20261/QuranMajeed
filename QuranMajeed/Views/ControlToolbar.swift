@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct ControlToolbar: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let currentPage: Int
     let totalPages: Int
     let juz: Int
@@ -14,6 +15,7 @@ struct ControlToolbar: View {
     let onSurahListTap: () -> Void
     let onBookmarkTap: () -> Void
     let onAudioTap: () -> Void
+    let onSettingsTap: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,11 +55,20 @@ struct ControlToolbar: View {
 
                 Spacer()
 
-                Button(action: onBookmarkTap) {
-                    Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(QuranTheme.goldDark)
-                        .frame(width: 44)
+                HStack(spacing: 0) {
+                    Button(action: onBookmarkTap) {
+                        Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(QuranTheme.goldDark)
+                            .frame(width: 44)
+                    }
+
+                    Button(action: onSettingsTap) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(QuranTheme.goldDark)
+                            .frame(width: 44)
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -79,7 +90,8 @@ struct ControlToolbar: View {
             isAudioPlaying: false,
             onSurahListTap: {},
             onBookmarkTap: {},
-            onAudioTap: {}
+            onAudioTap: {},
+            onSettingsTap: {}
         )
     }
     .background(QuranTheme.pageBackground)

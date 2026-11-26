@@ -10,8 +10,10 @@ struct QuranPageView: View {
     @EnvironmentObject var audioService: QuranAudioService
     @StateObject private var rateAppManager = RateAppManager()
     @State private var currentPage: Int = 1
+    @ObservedObject private var themeManager = ThemeManager.shared
     @State private var showSurahList = false
     @State private var showAudioPlayer = false
+    @State private var showSettings = false
 
     var body: some View {
         ZStack {
@@ -92,6 +94,9 @@ struct QuranPageView: View {
         .sheet(isPresented: $showAudioPlayer) {
             AudioPlayerView()
         }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
     }
 
     private var pageView: some View {
@@ -130,6 +135,9 @@ struct QuranPageView: View {
                         showAudioPlayer = true
                     }
                 }
+            },
+            onSettingsTap: {
+                showSettings = true
             }
         )
     }

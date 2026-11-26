@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct ReciterSelectView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     @EnvironmentObject var audioService: QuranAudioService
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
@@ -34,6 +35,9 @@ struct ReciterSelectView: View {
             }
             .navigationTitle("Select Reciter")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(QuranTheme.pageBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(QuranTheme.current.toolbarColorScheme, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {

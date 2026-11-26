@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct AudioPlayerView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     @EnvironmentObject var audioService: QuranAudioService
     @EnvironmentObject var dataService: QuranDataService
     @Environment(\.dismiss) var dismiss
@@ -289,6 +290,7 @@ struct AudioPlayerView: View {
 // MARK: - Circular Progress
 
 struct CircularProgressView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let progress: Double
 
     var body: some View {

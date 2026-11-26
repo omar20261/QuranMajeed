@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct SurahBannerView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let surah: Surah
 
     var body: some View {
@@ -33,6 +34,7 @@ struct SurahBannerView: View {
 }
 
 struct BannerOrnament: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     var body: some View {
         ZStack {
             // Pointed end shape
@@ -55,6 +57,7 @@ struct BannerEndShape: Shape {
 }
 
 struct BismillahView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     var body: some View {
         HStack(spacing: 12) {
             // Left decorative element
@@ -74,6 +77,7 @@ struct BismillahView: View {
 }
 
 struct OrnamentalDivider: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     var body: some View {
         HStack(spacing: 4) {
             Circle()
@@ -87,6 +91,7 @@ struct OrnamentalDivider: View {
 }
 
 struct JuzMarkerView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let juzNumber: Int
 
     var body: some View {

@@ -16,6 +16,7 @@ struct SelectedAyah: Identifiable {
 }
 
 struct PageContentView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let page: QuranPage
     @State private var selectedAyah: SelectedAyah?
 
@@ -242,6 +243,7 @@ struct PageFrameView<Content: View>: View {
 }
 
 struct CornerOrnament: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     var body: some View {
         Circle()
             .fill(QuranTheme.gold)

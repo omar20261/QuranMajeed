@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct AyahMarkerView: View {
+    @ObservedObject private var themeManager = ThemeManager.shared
     let number: Int
 
     private var arabicNumber: String {
