@@ -8,12 +8,14 @@ import Combine
 
 enum AppTheme: String, CaseIterable {
     case parchment = "Parchment"
+    case midnight = "Midnight"
     case night = "Night"
     case paper = "Paper"
 
     var pageBackground: Color {
         switch self {
         case .parchment: return Color(red: 0.98, green: 0.96, blue: 0.90)
+        case .midnight:  return Color(red: 0.05, green: 0.11, blue: 0.21)
         case .night:     return Color(red: 0.10, green: 0.08, blue: 0.06)
         case .paper:     return Color(red: 1.00, green: 1.00, blue: 1.00)
         }
@@ -22,6 +24,7 @@ enum AppTheme: String, CaseIterable {
     var pageBorder: Color {
         switch self {
         case .parchment: return Color(red: 0.76, green: 0.60, blue: 0.33)
+        case .midnight:  return Color(red: 0.20, green: 0.35, blue: 0.55)
         case .night:     return Color(red: 0.45, green: 0.35, blue: 0.20)
         case .paper:     return Color(red: 0.80, green: 0.72, blue: 0.55)
         }
@@ -30,6 +33,7 @@ enum AppTheme: String, CaseIterable {
     var arabicText: Color {
         switch self {
         case .parchment: return Color(red: 0.20, green: 0.15, blue: 0.10)
+        case .midnight:  return Color(red: 0.90, green: 0.92, blue: 0.96)
         case .night:     return Color(red: 0.92, green: 0.88, blue: 0.78)
         case .paper:     return Color(red: 0.10, green: 0.08, blue: 0.06)
         }
@@ -38,6 +42,7 @@ enum AppTheme: String, CaseIterable {
     var secondaryText: Color {
         switch self {
         case .parchment: return Color(red: 0.45, green: 0.35, blue: 0.25)
+        case .midnight:  return Color(red: 0.55, green: 0.65, blue: 0.78)
         case .night:     return Color(red: 0.60, green: 0.52, blue: 0.40)
         case .paper:     return Color(red: 0.40, green: 0.33, blue: 0.25)
         }
@@ -46,6 +51,7 @@ enum AppTheme: String, CaseIterable {
     var gold: Color {
         switch self {
         case .parchment: return Color(red: 0.80, green: 0.65, blue: 0.30)
+        case .midnight:  return Color(red: 0.75, green: 0.62, blue: 0.30)
         case .night:     return Color(red: 0.85, green: 0.68, blue: 0.32)
         case .paper:     return Color(red: 0.72, green: 0.58, blue: 0.25)
         }
@@ -54,6 +60,7 @@ enum AppTheme: String, CaseIterable {
     var goldLight: Color {
         switch self {
         case .parchment: return Color(red: 0.90, green: 0.80, blue: 0.55)
+        case .midnight:  return Color(red: 0.60, green: 0.50, blue: 0.25)
         case .night:     return Color(red: 0.75, green: 0.60, blue: 0.28)
         case .paper:     return Color(red: 0.85, green: 0.75, blue: 0.50)
         }
@@ -62,6 +69,7 @@ enum AppTheme: String, CaseIterable {
     var goldDark: Color {
         switch self {
         case .parchment: return Color(red: 0.60, green: 0.45, blue: 0.20)
+        case .midnight:  return Color(red: 0.85, green: 0.72, blue: 0.35)
         case .night:     return Color(red: 0.70, green: 0.55, blue: 0.25)
         case .paper:     return Color(red: 0.55, green: 0.42, blue: 0.18)
         }
@@ -70,6 +78,7 @@ enum AppTheme: String, CaseIterable {
     var bannerBackground: Color {
         switch self {
         case .parchment: return Color(red: 0.25, green: 0.20, blue: 0.15)
+        case .midnight:  return Color(red: 0.08, green: 0.18, blue: 0.32)
         case .night:     return Color(red: 0.18, green: 0.14, blue: 0.10)
         case .paper:     return Color(red: 0.20, green: 0.16, blue: 0.12)
         }
@@ -78,6 +87,7 @@ enum AppTheme: String, CaseIterable {
     var bannerText: Color {
         switch self {
         case .parchment: return Color(red: 0.95, green: 0.90, blue: 0.75)
+        case .midnight:  return Color(red: 0.88, green: 0.92, blue: 0.98)
         case .night:     return Color(red: 0.92, green: 0.88, blue: 0.78)
         case .paper:     return Color(red: 0.95, green: 0.90, blue: 0.75)
         }
@@ -85,8 +95,8 @@ enum AppTheme: String, CaseIterable {
 
     var toolbarColorScheme: ColorScheme {
         switch self {
-        case .night: return .dark
-        default:     return .light
+        case .night, .midnight: return .dark
+        default:                return .light
         }
     }
 }
