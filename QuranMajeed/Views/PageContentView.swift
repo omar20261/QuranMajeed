@@ -10,6 +10,7 @@ struct SelectedAyah: Identifiable {
     let surahId: Int
     let allAyahs: [Ayah]
     let focusedIndex: Int
+    let totalSurahAyahs: Int
     let surahEnglishName: String
     let surahArabicName: String
 }
@@ -19,13 +20,13 @@ struct PageContentView: View {
     @State private var selectedAyah: SelectedAyah?
 
     // Store ayahs by surah-ayah key; each entry includes all section ayahs and the tapped index
-    private var ayahLookup: [String: (surahId: Int, sectionAyahs: [Ayah], ayahIndex: Int, surahEnglishName: String, surahArabicName: String)] {
-        var lookup: [String: (Int, [Ayah], Int, String, String)] = [:]
+    private var ayahLookup: [String: (surahId: Int, sectionAyahs: [Ayah], ayahIndex: Int, totalSurahAyahs: Int, surahEnglishName: String, surahArabicName: String)] {
+        var lookup: [String: (Int, [Ayah], Int, Int, String, String)] = [:]
         for section in groupedContent {
             let sectionAyahs = section.ayahs.map(\.ayah)
             for (idx, pageAyah) in section.ayahs.enumerated() {
                 let key = "\(pageAyah.surah.id)-\(pageAyah.ayah.number)"
-                lookup[key] = (pageAyah.surah.id, sectionAyahs, idx, pageAyah.surah.englishName, pageAyah.surah.name)
+                lookup[key] = (pageAyah.surah.id, sectionAyahs, idx, pageAyah.surah.ayahCount, pageAyah.surah.englishName, pageAyah.surah.name)
             }
         }
         return lookup
@@ -80,6 +81,7 @@ struct PageContentView: View {
                 surahId: selected.surahId,
                 ayahs: selected.allAyahs,
                 initialIndex: selected.focusedIndex,
+                totalSurahAyahs: selected.totalSurahAyahs,
                 surahEnglishName: selected.surahEnglishName,
                 surahArabicName: selected.surahArabicName
             )
@@ -149,6 +151,7 @@ struct PageContentView: View {
                         surahId: data.surahId,
                         allAyahs: data.sectionAyahs,
                         focusedIndex: data.ayahIndex,
+                        totalSurahAyahs: data.totalSurahAyahs,
                         surahEnglishName: data.surahEnglishName,
                         surahArabicName: data.surahArabicName
                     )

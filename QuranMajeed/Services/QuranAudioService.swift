@@ -57,9 +57,6 @@ class QuranAudioService: ObservableObject {
     @Published var duration: TimeInterval = 0
     @Published var isBuffering = false
 
-    // MARK: - Verse Playback
-    @Published var playingVerseKey: String?  // "surahId:ayahNumber" while a verse is playing
-
     // MARK: - Downloads
     @Published var downloadStates: [String: DownloadState] = [:]
 
@@ -82,6 +79,12 @@ class QuranAudioService: ObservableObject {
         }
         setupRemoteControls()
         setupNetworkMonitor()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(ayahAudioDidStart),
+            name: .ayahAudioDidStart,
+            object: nil
+        )
     }
 
     func configure(surahs: [Surah]) {
@@ -126,21 +129,19 @@ class QuranAudioService: ObservableObject {
     // MARK: - Playback
 
     func prepare(surahId: Int) {
-        currentSurahId = surahId
+        currentSurahId  = surahId
         isPlayerVisible = true
-        playingVerseKey = nil
     }
 
     func play(surahId: Int) {
         guard let reciter = selectedReciter else { return }
 
-        currentSurahId = surahId
+        currentSurahId  = surahId
         isPlayerVisible = true
-        isBuffering = true
-        currentTime = 0
-        duration = 0
-        playingVerseKey = nil
-        audioError = nil
+        isBuffering     = true
+        currentTime     = 0
+        duration        = 0
+        audioError      = nil
 
         let audioURL: URL
         if let local = localFileURL(surahId: surahId, reciterId: reciter.id),
@@ -151,6 +152,9 @@ class QuranAudioService: ObservableObject {
             guard let remote = reciter.surahURL(for: surahId) else { return }
             audioURL = remote
         }
+
+        // Tell any playing ayah to stop
+        NotificationCenter.default.post(name: .surahAudioDidStart, object: nil)
 
         stopCurrentPlayer()
 
@@ -208,6 +212,8 @@ class QuranAudioService: ObservableObject {
     }
 
     func resume() {
+        // Tell any playing ayah to stop when surah resumes
+        NotificationCenter.default.post(name: .surahAudioDidStart, object: nil)
         player?.play()
         isPlaying = true
         updateNowPlayingInfo()
@@ -230,9 +236,13 @@ class QuranAudioService: ObservableObject {
     }
 
     func nextSurah() {
-        guard playingVerseKey == nil else { return }
         guard let current = currentSurahId, current < 114 else { return }
         play(surahId: current + 1)
+    }
+
+    @objc private func ayahAudioDidStart() {
+        guard isPlaying else { return }
+        pause()
     }
 
     func previousSurah() {
@@ -242,75 +252,6 @@ class QuranAudioService: ObservableObject {
         } else if current > 1 {
             play(surahId: current - 1)
         }
-    }
-
-    func playVerse(surahId: Int, ayahNumber: Int) {
-        let verseKey = "\(surahId):\(ayahNumber)"
-        if playingVerseKey == verseKey {
-            togglePlayPause()
-            return
-        }
-
-        guard let reciter = selectedReciter,
-              let url = VerseAudioService.shared.verseURL(surahId: surahId, ayahNumber: ayahNumber, versePath: reciter.versePath)
-        else { return }
-
-        stopCurrentPlayer()
-        playingVerseKey = verseKey
-        currentSurahId = surahId
-        isPlayerVisible = true
-        isBuffering = true
-        currentTime = 0
-        duration = 0
-
-        let item = AVPlayerItem(url: url)
-        player = AVPlayer(playerItem: item)
-
-        item.publisher(for: \.status)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] status in
-                guard let self else { return }
-                switch status {
-                case .readyToPlay:
-                    self.isBuffering = false
-                    self.audioError = nil
-                case .failed:
-                    self.isBuffering = false
-                    self.isPlaying = false
-                    self.playingVerseKey = nil
-                    self.audioError = "Could not load verse audio. Check your internet connection."
-                default: break
-                }
-            }
-            .store(in: &cancellables)
-
-        NotificationCenter.default.publisher(for: .AVPlayerItemDidPlayToEndTime, object: item)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                guard let self else { return }
-                if let token = self.timeObserverToken {
-                    self.player?.removeTimeObserver(token)
-                    self.timeObserverToken = nil
-                }
-                self.player = nil
-                self.isPlaying = false
-                self.playingVerseKey = nil
-            }
-            .store(in: &cancellables)
-
-        timeObserverToken = player?.addPeriodicTimeObserver(
-            forInterval: CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
-            queue: .main
-        ) { [weak self] time in
-            guard let self else { return }
-            self.currentTime = time.seconds
-            if let d = self.player?.currentItem?.duration, d.isNumeric, d.seconds > 0 {
-                self.duration = d.seconds
-            }
-        }
-
-        player?.play()
-        isPlaying = true
     }
 
     private func stopCurrentPlayer() {
