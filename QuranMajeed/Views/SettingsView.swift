@@ -58,7 +58,7 @@ struct SettingsView: View {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(QuranTheme.secondaryText)
                             .padding(10)
                             .contentShape(Circle())
                     }
