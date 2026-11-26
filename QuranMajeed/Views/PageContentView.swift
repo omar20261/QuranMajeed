@@ -179,7 +179,7 @@ struct PageContentView: View {
 
             // Ayah text (tappable)
             var ayahText = AttributedString(text)
-            ayahText.font = QuranTheme.uiArabicFont(size: 24)
+            ayahText.font = QuranTheme.uiArabicFont(size: QuranTheme.fontSize)
             ayahText.foregroundColor = QuranTheme.arabicText
             ayahText.link = linkURL
             result.append(ayahText)
@@ -187,7 +187,7 @@ struct PageContentView: View {
             // Marker (also tappable, same link)
             let markerString = " \u{FD3F}\(pageAyah.ayah.number.arabicNumeral)\u{FD3E} "
             var marker = AttributedString(markerString)
-            marker.font = QuranTheme.uiArabicFont(size: 28)
+            marker.font = QuranTheme.uiArabicFont(size: QuranTheme.markerFontSize)
             marker.foregroundColor = QuranTheme.gold
             marker.link = linkURL
             result.append(marker)

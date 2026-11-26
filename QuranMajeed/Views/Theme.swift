@@ -97,14 +97,20 @@ class ThemeManager: ObservableObject {
     static let shared = ThemeManager()
 
     @Published var current: AppTheme
-    private var cancellable: AnyCancellable?
+    @Published var fontSize: CGFloat
+    private var cancellables = Set<AnyCancellable>()
+
+    static let minFontSize: CGFloat = 18
+    static let maxFontSize: CGFloat = 46
+    static let defaultFontSize: CGFloat = 32
 
     private init() {
         let saved = UserDefaults.standard.string(forKey: "selectedTheme") ?? AppTheme.parchment.rawValue
         current = AppTheme(rawValue: saved) ?? .parchment
-        cancellable = $current.sink { theme in
-            UserDefaults.standard.set(theme.rawValue, forKey: "selectedTheme")
-        }
+        fontSize = CGFloat(UserDefaults.standard.float(forKey: "fontSize").nonZero ?? Float(ThemeManager.defaultFontSize))
+
+        $current.sink { UserDefaults.standard.set($0.rawValue, forKey: "selectedTheme") }.store(in: &cancellables)
+        $fontSize.sink { UserDefaults.standard.set(Float($0), forKey: "fontSize") }.store(in: &cancellables)
     }
 }
 
@@ -122,6 +128,8 @@ enum QuranTheme {
     static var goldDark: Color       { current.goldDark }
     static var bannerBackground: Color { current.bannerBackground }
     static var bannerText: Color     { current.bannerText }
+    static var fontSize: CGFloat     { ThemeManager.shared.fontSize }
+    static var markerFontSize: CGFloat { ThemeManager.shared.fontSize + 4 }
 
     // Fonts
     static func arabicFont(size: CGFloat) -> Font {
@@ -131,4 +139,8 @@ enum QuranTheme {
     static func uiArabicFont(size: CGFloat) -> UIFont {
         UIFont(name: "KFGQPCHAFSUthmanicScript-Regula", size: size) ?? .systemFont(ofSize: size)
     }
+}
+
+private extension Float {
+    var nonZero: Float? { self == 0 ? nil : self }
 }

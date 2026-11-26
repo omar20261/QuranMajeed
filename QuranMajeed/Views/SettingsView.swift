@@ -34,6 +34,43 @@ struct SettingsView: View {
                 }
                 .foregroundStyle(QuranTheme.secondaryText)
 
+                Section("Font Size") {
+                    HStack(spacing: 16) {
+                        Button {
+                            if themeManager.fontSize > ThemeManager.minFontSize {
+                                themeManager.fontSize -= 2
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle")
+                                .font(.system(size: 34))
+                                .foregroundStyle(themeManager.fontSize > ThemeManager.minFontSize ? QuranTheme.goldDark : QuranTheme.secondaryText.opacity(0.4))
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer()
+
+                        Text("بِسْمِ ٱللَّهِ")
+                            .font(QuranTheme.arabicFont(size: themeManager.fontSize))
+                            .foregroundStyle(QuranTheme.arabicText)
+
+                        Spacer()
+
+                        Button {
+                            if themeManager.fontSize < ThemeManager.maxFontSize {
+                                themeManager.fontSize += 2
+                            }
+                        } label: {
+                            Image(systemName: "plus.circle")
+                                .font(.system(size: 34))
+                                .foregroundStyle(themeManager.fontSize < ThemeManager.maxFontSize ? QuranTheme.goldDark : QuranTheme.secondaryText.opacity(0.4))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
+                    .listRowBackground(QuranTheme.pageBackground)
+                }
+                .foregroundStyle(QuranTheme.secondaryText)
+
                 Section("About") {
                     HStack {
                         Text("App Version")
