@@ -11,8 +11,23 @@ struct AyahsTranslationSheet: View {
     let surahEnglishName: String
     let surahArabicName: String
 
+    let initialIndex: Int
+
     @EnvironmentObject var audioService: QuranAudioService
     @Environment(\.dismiss) private var dismiss
+    @State private var focusedIndex: Int
+
+    init(surahId: Int, ayahs: [Ayah], initialIndex: Int = 0, surahEnglishName: String, surahArabicName: String) {
+        self.surahId = surahId
+        self.ayahs = ayahs
+        self.initialIndex = initialIndex
+        self.surahEnglishName = surahEnglishName
+        self.surahArabicName = surahArabicName
+        self._focusedIndex = State(initialValue: initialIndex)
+    }
+
+    private var focusedAyah: Ayah { ayahs[focusedIndex] }
+
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,29 +53,105 @@ struct AyahsTranslationSheet: View {
 
             Divider()
 
-            // Ayahs list
+            // Single ayah display
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    ForEach(ayahs) { ayah in
-                        ayahCard(ayah)
-                    }
-                }
-                .padding(.vertical, 20)
-                .padding(.horizontal, 16)
+                ayahCard(focusedAyah)
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 16)
             }
+            .onChange(of: audioService.playingVerseKey) { _ in
+                if let key = audioService.playingVerseKey,
+                   let ayahNumber = Int(key.split(separator: ":").last ?? ""),
+                   let idx = ayahs.firstIndex(where: { $0.number == ayahNumber }) {
+                    focusedIndex = idx
+                }
+            }
+
+            // Always-visible verse navigation controls
+            verseControls()
         }
         .background(QuranTheme.pageBackground)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.hidden)
     }
 
-    private func ayahCard(_ ayah: Ayah) -> some View {
-        let verseKey = "\(surahId):\(ayah.number)"
-        let isThisVersePlaying = audioService.playingVerseKey == verseKey
-        let canPlayVerse = audioService.isOnline
+    // MARK: - Verse Controls Bar
 
-        return VStack(spacing: 16) {
-            // Arabic text with ayah number at the end
+    private func verseControls() -> some View {
+        VStack(spacing: 0) {
+            Divider()
+            let verseKey = "\(surahId):\(focusedAyah.number)"
+            let isThisPlaying = audioService.playingVerseKey == verseKey
+
+            VStack(spacing: 4) {
+                HStack {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) { focusedIndex -= 1 }
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(canGoPrevious ? QuranTheme.goldDark : QuranTheme.secondaryText.opacity(0.3))
+                            .frame(width: 44, height: 44)
+                    }
+                    .disabled(!canGoPrevious)
+
+                    Spacer()
+
+                    Button {
+                        audioService.playVerse(surahId: surahId, ayahNumber: focusedAyah.number)
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(isThisPlaying ? QuranTheme.goldDark : QuranTheme.goldLight.opacity(0.3))
+                                .frame(width: 52, height: 52)
+                                .overlay(Circle().stroke(QuranTheme.pageBorder.opacity(0.5), lineWidth: 1))
+
+                            if isThisPlaying && audioService.isBuffering {
+                                ProgressView().tint(.white)
+                            } else if !audioService.isOnline && !isThisPlaying {
+                                Image(systemName: "wifi.slash")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(QuranTheme.secondaryText.opacity(0.5))
+                            } else {
+                                Image(systemName: isThisPlaying && audioService.isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(isThisPlaying ? .white : QuranTheme.goldDark)
+                                    .offset(x: (isThisPlaying && audioService.isPlaying) ? 0 : 2)
+                            }
+                        }
+                    }
+                    .disabled(!audioService.isOnline && !isThisPlaying)
+
+                    Spacer()
+
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) { focusedIndex += 1 }
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(canGoNext ? QuranTheme.goldDark : QuranTheme.secondaryText.opacity(0.3))
+                            .frame(width: 44, height: 44)
+                    }
+                    .disabled(!canGoNext)
+                }
+
+                Text("\(focusedIndex + 1) / \(ayahs.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(QuranTheme.secondaryText)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+        }
+        .background(QuranTheme.pageBackground)
+    }
+
+    private var canGoPrevious: Bool { focusedIndex > 0 }
+    private var canGoNext: Bool { focusedIndex < ayahs.count - 1 }
+
+    // MARK: - Ayah Card
+
+    private func ayahCard(_ ayah: Ayah) -> some View {
+        VStack(spacing: 16) {
             (Text(ayah.arabicText)
                 .font(QuranTheme.arabicFont(size: 24))
                 .foregroundColor(QuranTheme.arabicText)
@@ -72,62 +163,12 @@ struct AyahsTranslationSheet: View {
                 .frame(maxWidth: .infinity)
                 .environment(\.layoutDirection, .rightToLeft)
 
-            // Translation
             Text(ayah.translation)
                 .font(.body)
                 .foregroundColor(QuranTheme.secondaryText)
                 .multilineTextAlignment(.leading)
                 .lineSpacing(4)
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Listen button
-            Button {
-                audioService.playVerse(surahId: surahId, ayahNumber: ayah.number)
-            } label: {
-                VStack(spacing: 6) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                isThisVersePlaying ? QuranTheme.goldDark
-                                : canPlayVerse ? QuranTheme.goldLight.opacity(0.3)
-                                : QuranTheme.pageBorder.opacity(0.15)
-                            )
-                            .frame(width: 56, height: 56)
-                            .overlay(Circle().stroke(QuranTheme.pageBorder.opacity(0.5), lineWidth: 1))
-
-                        if isThisVersePlaying && audioService.isBuffering {
-                            ProgressView()
-                                .tint(isThisVersePlaying ? .white : QuranTheme.goldDark)
-                        } else if !canPlayVerse {
-                            Image(systemName: "wifi.slash")
-                                .font(.system(size: 18))
-                                .foregroundStyle(QuranTheme.secondaryText.opacity(0.5))
-                        } else {
-                            Image(systemName: isThisVersePlaying && audioService.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 22))
-                                .foregroundStyle(isThisVersePlaying ? .white : QuranTheme.goldDark)
-                                .offset(x: (isThisVersePlaying && audioService.isPlaying) ? 0 : 2)
-                        }
-                    }
-
-                    Text(!canPlayVerse ? "No internet" : isThisVersePlaying && audioService.isPlaying ? "Pause" : "Listen")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(
-                            !canPlayVerse ? QuranTheme.secondaryText.opacity(0.5)
-                            : isThisVersePlaying ? QuranTheme.goldDark
-                            : QuranTheme.secondaryText
-                        )
-                }
-            }
-            .disabled(!canPlayVerse)
-            .frame(maxWidth: .infinity)
-
-            if ayah.id != ayahs.last?.id {
-                Rectangle()
-                    .fill(QuranTheme.gold.opacity(0.2))
-                    .frame(height: 1)
-                    .padding(.top, 8)
-            }
         }
     }
 }

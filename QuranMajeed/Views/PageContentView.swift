@@ -8,7 +8,8 @@ import SwiftUI
 struct SelectedAyah: Identifiable {
     let id = UUID()
     let surahId: Int
-    let ayah: Ayah
+    let allAyahs: [Ayah]
+    let focusedIndex: Int
     let surahEnglishName: String
     let surahArabicName: String
 }
@@ -17,12 +18,15 @@ struct PageContentView: View {
     let page: QuranPage
     @State private var selectedAyah: SelectedAyah?
 
-    // Store ayahs by surah-ayah key for lookup when tapped
-    private var ayahLookup: [String: (surahId: Int, ayah: Ayah, surahEnglishName: String, surahArabicName: String)] {
-        var lookup: [String: (Int, Ayah, String, String)] = [:]
-        for pageAyah in page.ayahs {
-            let key = "\(pageAyah.surah.id)-\(pageAyah.ayah.number)"
-            lookup[key] = (pageAyah.surah.id, pageAyah.ayah, pageAyah.surah.englishName, pageAyah.surah.name)
+    // Store ayahs by surah-ayah key; each entry includes all section ayahs and the tapped index
+    private var ayahLookup: [String: (surahId: Int, sectionAyahs: [Ayah], ayahIndex: Int, surahEnglishName: String, surahArabicName: String)] {
+        var lookup: [String: (Int, [Ayah], Int, String, String)] = [:]
+        for section in groupedContent {
+            let sectionAyahs = section.ayahs.map(\.ayah)
+            for (idx, pageAyah) in section.ayahs.enumerated() {
+                let key = "\(pageAyah.surah.id)-\(pageAyah.ayah.number)"
+                lookup[key] = (pageAyah.surah.id, sectionAyahs, idx, pageAyah.surah.englishName, pageAyah.surah.name)
+            }
         }
         return lookup
     }
@@ -74,7 +78,8 @@ struct PageContentView: View {
         .sheet(item: $selectedAyah) { selected in
             AyahsTranslationSheet(
                 surahId: selected.surahId,
-                ayahs: [selected.ayah],
+                ayahs: selected.allAyahs,
+                initialIndex: selected.focusedIndex,
                 surahEnglishName: selected.surahEnglishName,
                 surahArabicName: selected.surahArabicName
             )
@@ -142,7 +147,8 @@ struct PageContentView: View {
                    let data = ayahLookup[host] {
                     selectedAyah = SelectedAyah(
                         surahId: data.surahId,
-                        ayah: data.ayah,
+                        allAyahs: data.sectionAyahs,
+                        focusedIndex: data.ayahIndex,
                         surahEnglishName: data.surahEnglishName,
                         surahArabicName: data.surahArabicName
                     )
